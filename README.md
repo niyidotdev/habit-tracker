@@ -1,23 +1,42 @@
 # Habitual — Habit Tracker
 
-A full-stack habit tracking application built with Node.js, Express, Drizzle ORM, and React.
+A full-stack habit tracking app. Build streaks, log completions, and visualize your consistency over time.
+
+---
+
+## Stack
+
+**Server** — Node.js · Express 5 · TypeScript · Drizzle ORM · PostgreSQL · JWT · Zod · Vitest
+
+**Client** — React 18 · TypeScript · Vite · Tailwind CSS · TanStack Query · Axios · React Router v6
 
 ---
 
 ## Project Structure
 
 ```
-api-design-node-v5/
-├── src/                  # Express API (backend)
-│   ├── controllers/
-│   ├── db/
-│   ├── middleware/
-│   ├── routes/
-│   └── utils/
-├── client/               # React app (frontend)
-│   └── src/
-├── drizzle.config.ts
-└── package.json
+habit-tracker/
+├── server/                  # Express REST API
+│   ├── src/
+│   │   ├── controllers/     # Route handlers (auth, habits)
+│   │   ├── db/              # Drizzle schema, connection, seed
+│   │   ├── middleware/       # Auth, validation, error handling
+│   │   ├── routes/          # Express routers
+│   │   └── utils/           # JWT helpers, password hashing
+│   ├── drizzle.config.ts
+│   └── package.json
+│
+├── client/                  # React frontend
+│   ├── src/
+│   │   ├── components/      # HabitCard, HabitFormModal, HabitStatsModal, Sidebar
+│   │   ├── context/         # AuthContext
+│   │   ├── lib/             # Axios client, utility functions
+│   │   ├── pages/           # LoginPage, RegisterPage, DashboardPage
+│   │   └── types/           # Shared TypeScript interfaces
+│   ├── vite.config.ts
+│   └── package.json
+│
+└── README.md
 ```
 
 ---
@@ -25,33 +44,25 @@ api-design-node-v5/
 ## Prerequisites
 
 - Node.js 18+
-- PostgreSQL running locally (or a connection string to a hosted instance)
+- PostgreSQL (local or hosted)
 
 ---
 
-## Getting Started
+## Setup
 
 ### 1. Install dependencies
 
-**Backend:**
 ```bash
-npm install
-```
+# Server
+cd server && npm install
 
-**Frontend:**
-```bash
-npm install --prefix client
+# Client
+cd client && npm install
 ```
 
 ### 2. Configure environment
 
-Copy the example env file and fill in your values:
-
-```bash
-cp .env.example .env
-```
-
-Required variables:
+Create a `.env` file inside `server/`:
 
 ```env
 DATABASE_URL=postgres://user:password@localhost:5432/habitual
@@ -61,100 +72,86 @@ PORT=3000
 
 ### 3. Set up the database
 
-Push the schema to your database:
+From inside the `server/` directory:
 
 ```bash
+# Push the schema to your database
 npm run db:push
-```
 
-Optionally seed with sample data:
-
-```bash
+# (Optional) Seed with sample data
 npm run db:seed
 ```
 
-### 4. Run in development
+### 4. Start the development servers
 
-You'll need two terminals — one for the API and one for the frontend dev server.
+You'll need two terminals.
 
-**Terminal 1 — API:**
+**Terminal 1 — API** (from `server/`):
 ```bash
 npm run dev
 ```
 Runs on `http://localhost:3000`
 
-**Terminal 2 — Frontend:**
+**Terminal 2 — Client** (from `client/`):
 ```bash
-npm run dev --prefix client
+npm run dev
 ```
 Runs on `http://localhost:5173`
 
-The Vite dev server proxies all `/api` requests to `http://localhost:3000`, so no CORS issues.
+The Vite dev server proxies all `/api/*` requests to `localhost:3000`, so no CORS configuration is needed during development.
 
 ---
 
-## Available Scripts
+## Scripts
 
-### Backend
+### Server (`server/`)
 
 | Script | Description |
 |---|---|
-| `npm run dev` | Start API with hot reload (nodemon) |
+| `npm run dev` | Start API with hot reload |
 | `npm run start` | Start API in production mode |
 | `npm run db:push` | Push schema changes to the database |
 | `npm run db:generate` | Generate migration files |
-| `npm run db:migrate` | Run migrations |
-| `npm run db:studio` | Open Drizzle Studio (DB GUI) |
+| `npm run db:migrate` | Run pending migrations |
+| `npm run db:studio` | Open Drizzle Studio (visual DB explorer) |
 | `npm run db:seed` | Seed the database with sample data |
-| `npm test` | Run tests |
+| `npm test` | Run tests (Vitest) |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run test:coverage` | Run tests with coverage report |
 
-### Frontend
+### Client (`client/`)
 
 | Script | Description |
 |---|---|
-| `npm run dev --prefix client` | Start Vite dev server with HMR |
-| `npm run build --prefix client` | Production build |
-| `npm run preview --prefix client` | Preview the production build |
+| `npm run dev` | Start Vite dev server with HMR |
+| `npm run build` | Type-check and build for production |
+| `npm run preview` | Preview the production build locally |
 
 ---
 
-## API Overview
+## API Reference
 
 Base URL: `http://localhost:3000/api`
 
+All protected routes require an `Authorization: Bearer <token>` header.
+
+### Auth
+
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| `POST` | `/auth/register` | No | Register a new user |
-| `POST` | `/auth/login` | No | Login and receive a JWT |
-| `GET` | `/habits` | Yes | Get all habits for the current user |
-| `POST` | `/habits` | Yes | Create a new habit |
-| `GET` | `/habits/:id` | Yes | Get a single habit with recent entries |
-| `PATCH` | `/habits/:id` | Yes | Update a habit |
-| `DELETE` | `/habits/:id` | Yes | Delete a habit |
-| `POST` | `/habits/:id/complete` | Yes | Log a completion for today |
-| `GET` | `/habits/:id/stats` | Yes | Get streak and completion stats |
+| `POST` | `/auth/register` | — | Register a new user |
+| `POST` | `/auth/login` | — | Log in and receive a JWT |
 
-See [API_DOCS.md](./API_DOCS.md) for full request/response examples.
+### Habits
 
----
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/habits` | ✓ | List all habits for the current user |
+| `POST` | `/habits` | ✓ | Create a new habit |
+| `GET` | `/habits/:id` | ✓ | Get a single habit with recent entries |
+| `PATCH` | `/habits/:id` | ✓ | Update a habit |
+| `DELETE` | `/habits/:id` | ✓ | Delete a habit and all its history |
+| `POST` | `/habits/:id/complete` | ✓ | Log a completion entry for today |
+| `GET` | `/habits/:id/stats` | ✓ | Get streaks and completion statistics |
 
-## Tech Stack
-
-### Backend
-- **Runtime:** Node.js with TypeScript (`tsx`)
-- **Framework:** Express 5
-- **Database:** PostgreSQL via `pg`
-- **ORM:** Drizzle ORM
-- **Auth:** JWT via `jose` + bcrypt for password hashing
-- **Validation:** Zod
-- **Testing:** Vitest + Supertest
-
-### Frontend
-- **Framework:** React 18 + TypeScript
-- **Build tool:** Vite
-- **Styling:** Tailwind CSS
-- **Routing:** React Router v6
-- **Data fetching:** TanStack Query (React Query)
-- **HTTP client:** Axios
-- **Icons:** Lucide React
-- **Toasts:** React Hot Toast
+See [`server/API_DOCS.md`](./server/API_DOCS.md) for full request/response examples.
