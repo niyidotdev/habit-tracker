@@ -14,7 +14,7 @@ app.use(
   cors({
     origin: [
       'http://localhost:5173',
-      'https://habit-tracker-wine-sigma.vercel.app/',
+      'https://habit-tracker-wine-sigma.vercel.app',
     ],
   }),
 )
